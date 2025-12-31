@@ -86,7 +86,7 @@ class CometChatClient:
                     "Webhook created successfully",
                     extra={
                         "webhook_id": webhook_id,
-                        "name": name,
+                        "webhook_name": name,
                         "status_code": response.status_code
                     }
                 )
@@ -194,6 +194,89 @@ class CometChatClient:
                 logger.error(
                     "Request error creating app",
                     extra={"app_name": name, "error": str(e)}
+                )
+                raise CometChatAPIError(
+                    message=f"Request failed: {str(e)}",
+                    status_code=500
+                )
+
+    async def create_role(
+        self,
+        role: str,
+        name: str,
+        description: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        settings: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Create a new role in CometChat
+        
+        Args:
+            role: Role UID
+            name: Role name
+            description: Role description
+            metadata: Role metadata
+            settings: Role settings
+            
+        Returns:
+            Dict containing role creation response
+            
+        Raises:
+            CometChatAPIError: If API request fails
+        """
+        endpoint = f"{self.base_url}/roles"
+        
+        payload = {
+            "role": role,
+            "name": name
+        }
+        
+        if description:
+            payload["description"] = description
+            
+        if metadata:
+            payload["metadata"] = metadata
+
+        if settings:
+            payload["settings"] = settings
+            
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.post(
+                    endpoint,
+                    headers=self._get_headers(),
+                    json=payload
+                )
+                response.raise_for_status()
+                
+                logger.info(
+                    "Role created successfully",
+                    extra={
+                        "role_uid": role,
+                        "role_name": name,
+                        "status_code": response.status_code
+                    }
+                )
+                return response.json()
+                
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    "HTTP error creating role",
+                    extra={
+                        "role_uid": role,
+                        "status_code": e.response.status_code,
+                        "response": e.response.text
+                    }
+                )
+                raise CometChatAPIError(
+                    message=f"Failed to create role: {e.response.text}",
+                    status_code=e.response.status_code
+                )
+            
+            except httpx.RequestError as e:
+                logger.error(
+                    "Request error creating role",
+                    extra={"role_uid": role, "error": str(e)}
                 )
                 raise CometChatAPIError(
                     message=f"Request failed: {str(e)}",
