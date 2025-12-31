@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     COMETCHAT_APP_ID: str
     COMETCHAT_API_KEY: str
     COMETCHAT_REGION: str = "us"
+    COMETCHAT_AUTH_KEY: str | None = None
+    COMETCHAT_AUTH_SECRET: str | None = None
     
     # CORS
     ALLOWED_ORIGINS: list[str] = ["*"]

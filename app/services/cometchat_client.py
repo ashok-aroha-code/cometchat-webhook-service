@@ -116,6 +116,90 @@ class CometChatClient:
                     status_code=500
                 )
     
+    async def create_app(
+        self,
+        name: str,
+        region: str = "us",
+        case_sensitive: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Create a new app in CometChat
+        
+        Args:
+            name: App name
+            region: App region (us or eu)
+            case_sensitive: Enable case sensitivity
+            
+        Returns:
+            Dict containing app creation response
+            
+        Raises:
+            CometChatAPIError: If API request fails
+        """
+        endpoint = "https://apimgmt.cometchat.io/apps"
+        
+        if not settings.COMETCHAT_AUTH_KEY or not settings.COMETCHAT_AUTH_SECRET:
+            raise CometChatAPIError(
+                message="COMETCHAT_AUTH_KEY and COMETCHAT_AUTH_SECRET are required for this operation",
+                status_code=500
+            )
+
+        headers = {
+            "key": settings.COMETCHAT_AUTH_KEY,
+            "secret": settings.COMETCHAT_AUTH_SECRET,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        
+        payload = {
+            "name": name,
+            "region": region,
+            "caseSensitive": case_sensitive
+        }
+        
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.post(
+                    endpoint,
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                
+                logger.info(
+                    "App created successfully",
+                    extra={
+                        "app_name": name,
+                        "region": region,
+                        "status_code": response.status_code
+                    }
+                )
+                return response.json()
+                
+            except httpx.HTTPStatusError as e:
+                logger.error(
+                    "HTTP error creating app",
+                    extra={
+                        "app_name": name,
+                        "status_code": e.response.status_code,
+                        "response": e.response.text
+                    }
+                )
+                raise CometChatAPIError(
+                    message=f"Failed to create app: {e.response.text}",
+                    status_code=e.response.status_code
+                )
+            
+            except httpx.RequestError as e:
+                logger.error(
+                    "Request error creating app",
+                    extra={"app_name": name, "error": str(e)}
+                )
+                raise CometChatAPIError(
+                    message=f"Request failed: {str(e)}",
+                    status_code=500
+                )
+
     async def health_check(self) -> bool:
         """Check if CometChat API is reachable"""
         try:
