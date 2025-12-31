@@ -12,3 +12,4 @@ class RoleResponse(BaseModel):
     success: bool
     message: str
     data: Dict[str, Any]
+
