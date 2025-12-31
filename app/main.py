@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import time
 
-from app.api.v1 import webhooks, apps
+from app.api.v1 import webhooks, apps, roles
 from app.core.config import get_settings
 from app.core.logging import logger
 from app.services.cometchat_client import cometchat_client
@@ -77,6 +77,7 @@ async def readiness_check():
 # Include routers
 app.include_router(webhooks.router)
 app.include_router(apps.router)
+app.include_router(roles.router)
 
 @app.get("/", tags=["root"])
 async def root():
