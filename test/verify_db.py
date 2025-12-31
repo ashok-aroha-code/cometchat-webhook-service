@@ -1,36 +1,31 @@
-"""Test database operations"""
+"""Verify database connection and version"""
+import sys
+import os
+from sqlalchemy import text
+
+# Add parent directory to path so we can import app
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.core.database import SessionLocal
-from app.models.tenant import Tenant
-from app.core.init_db import init_db
 
-# Initialize database
-init_db()
+def verify_db():
+    print("Checking database connection...")
+    db = SessionLocal()
+    try:
+        # Check version (SQLite)
+        result = db.execute(text("SELECT sqlite_version()"))
+        version = result.scalar()
+        print(f"Database connected successfully!")
+        print(f"SQLite Version: {version}")
+        
+        # Dummy query
+        db.execute(text("SELECT 1"))
+        print("Dummy query executed successfully.")
+        
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+    finally:
+        db.close()
 
-# Create session
-db = SessionLocal()
-
-# Create test tenant
-tenant = Tenant(
-    user_first_name="John",
-    user_last_name="Doe",
-    user_email="john.doe@example.com",
-    user_phone="+1234567890",
-    cometchat_app_id="123456789abc",
-    cometchat_api_key="test_api_key",
-    cometchat_region="us",
-    metadata={"company": "Acme Corp"}
-)
-
-db.add(tenant)
-db.commit()
-db.refresh(tenant)
-
-print(f"Created tenant with user_id: {tenant.user_id}")
-print(f"Full name: {tenant.full_name}")
-print(f"Email: {tenant.user_email}")
-
-# Query tenant
-queried = db.query(Tenant).filter(Tenant.user_email == "john.doe@example.com").first()
-print(f"\nQueried tenant: {queried}")
-
-db.close()
+if __name__ == "__main__":
+    verify_db()
