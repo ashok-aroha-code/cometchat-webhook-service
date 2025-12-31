@@ -44,3 +44,51 @@ async def create_role(request: RoleCreateRequest):
             status_code=e.status_code,
             detail=e.message
         )
+
+@router.post(
+    "/admin",
+    response_model=RoleResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create admin role"
+)
+async def create_admin_role():
+    """
+    Create a new admin role with predefined permissions:
+    - role: admin
+    - name: Administrator
+    - description: Full access administrator
+    - accessLevel: 10
+    - permissions: read, write, delete
+    """
+    try:
+        # Predefined admin role payload
+        admin_metadata = {
+            "permissions": ["read", "write", "delete",],
+            "accessLevel": 10
+        }
+        
+        admin_settings = {
+            "listUsers": "all",
+            "sendMessagesTo": "all"
+        }
+
+        result = await cometchat_client.create_role(
+            role="admin",
+            name="Administrator",
+            description="Full access administrator",
+            metadata=admin_metadata,
+            settings=admin_settings
+        )
+        
+        return RoleResponse(
+            success=True,
+            message="Admin role created successfully",
+            data=result
+        )
+        
+    except CometChatAPIError as e:
+        logger.error(f"Failed to create admin role: {str(e)}")
+        raise HTTPException(
+            status_code=e.status_code,
+            detail=e.message
+        )
